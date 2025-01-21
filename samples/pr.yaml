@@ -1,0 +1,18 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: test-orchestration
+  annotations:
+    armada.tekton.dev/orchestration: "true"
+spec:
+  pipelineSpec:
+    tasks:
+      - name: noop-task
+        taskSpec:
+          steps:
+            - name: noop-task
+              image: registry.access.redhat.com/ubi9/ubi-micro
+              script: |
+                echo "hello world"
+                exit 0
