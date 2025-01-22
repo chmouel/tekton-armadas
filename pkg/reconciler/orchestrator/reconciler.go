@@ -18,11 +18,14 @@ package orchestrator
 
 import (
 	"context"
-"gopkg.in/yaml.v3"
+	"encoding/base64"
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 
-	"github.com/openshift-pipelines/tekton-armada/pkg/apis/armada"
+	"github.com/openshift-pipelines/tekton-armadas/pkg/apis/armada"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	tektonPipelineRunInformerv1 "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipelinerun"
 	tektonPipelineRunReconcilerv1 "github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1/pipelinerun"
@@ -65,10 +68,7 @@ func ctrlOpts() func(impl *controller.Impl) controller.Options {
 }
 
 // NewReconciler creates a Reconciler and returns the result of NewImpl.
-func NewReconciler(
-	ctx context.Context,
-	cmw configmap.Watcher,
-) *controller.Impl {
+func NewReconciler(ctx context.Context, _ configmap.Watcher) *controller.Impl {
 	pipelineRunInformer := tektonPipelineRunInformerv1.Get(ctx)
 
 	r := &Reconciler{
@@ -83,19 +83,32 @@ func NewReconciler(
 	return impl
 }
 
-func serializeObjectYaml(p any) {
+func serializeObjectYaml(p any) (string, error) {
 	// use gopkgs.yaml to serialize
-	yaml.
+	marshalled, err := yaml.Marshal(p)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal object: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(marshalled), nil
+}
 
+func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.PipelineRun) reconciler.Event {
+	logger := logging.FromContext(ctx)
+	data, err := serializeObjectYaml(pr)
+	if err != nil {
+		return err
+	}
+	logger.Infof("Sending PipelineRun %s to minion: %s", pr.GetName(), data)
+	return nil
 }
 
 // ReconcileKind implements Interface.ReconcileKind.
 func (r *Reconciler) ReconcileKind(ctx context.Context, pr *tektonv1.PipelineRun) reconciler.Event {
 	// This logger has all the context necessary to identify which resource is being reconciled.
 	logger := logging.FromContext(ctx)
-	logger.Infof("Reconciling PipelineRun %s", pr.GetName())
+	logger.Infof("Reconciling PipelineRun %s, status: %s", pr.GetName(), pr.Spec.Status)
 	if pr.Spec.Status == tektonv1.PipelineRunSpecStatusPending {
-		logger.Info("Pending PipelineRun")
+		return r.HandlePendingPipelineRun(ctx, pr)
 	}
 	return nil
 }

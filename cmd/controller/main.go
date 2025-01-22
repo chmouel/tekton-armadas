@@ -25,7 +25,5 @@ import (
 )
 
 func main() {
-	sharedmain.Main("controller",
-		orchestrator.NewController,
-	)
+	sharedmain.Main("controller", orchestrator.NewReconciler)
 }
