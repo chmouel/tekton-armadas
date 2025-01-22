@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/openshift-pipelines/tekton-armadas/pkg/apis/armada"
+	"github.com/openshift-pipelines/tekton-armada/pkg/apis/armada"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

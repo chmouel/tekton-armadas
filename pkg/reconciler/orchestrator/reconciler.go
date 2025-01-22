@@ -18,29 +18,35 @@ package orchestrator
 
 import (
 	"context"
-
+"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/types"
-	"knative.dev/pkg/configmap"
-	"knative.dev/pkg/controller"
-	"knative.dev/pkg/kmeta"
-	"knative.dev/pkg/logging"
+	"k8s.io/client-go/kubernetes"
 
-	"github.com/openshift-pipelines/tekton-armadas/pkg/apis/armada"
+	"github.com/openshift-pipelines/tekton-armada/pkg/apis/armada"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	tektonPipelineRunInformerv1 "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipelinerun"
 	tektonPipelineRunReconcilerv1 "github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1/pipelinerun"
 	kubeclient "knative.dev/pkg/client/injection/kube/client"
+	"knative.dev/pkg/configmap"
+	"knative.dev/pkg/controller"
+	"knative.dev/pkg/kmeta"
+	"knative.dev/pkg/logging"
+	"knative.dev/pkg/reconciler"
 )
+
+type Reconciler struct {
+	kubeclient kubernetes.Interface
+}
 
 // enqueue only the pipelineruns which are in `started` state
 // pipelinerun will have a label `pipelinesascode.tekton.dev/state` to describe the state.
 func checkStateAndEnqueue(impl *controller.Impl) func(obj interface{}) {
 	return func(obj interface{}) {
-		object, err := kmeta.DeletionHandlingAccessor(obj)
+		pr, err := kmeta.DeletionHandlingAccessor(obj)
 		if err == nil {
-			val, exist := object.GetAnnotations()[LabelOrchestration]
-			if exist && val == "true" {
-				impl.EnqueueKey(types.NamespacedName{Namespace: object.GetNamespace(), Name: object.GetName()})
+			val, AnnotationExist := pr.GetAnnotations()[LabelOrchestration]
+			if AnnotationExist && val == "true" {
+				impl.EnqueueKey(types.NamespacedName{Namespace: pr.GetNamespace(), Name: pr.GetName()})
 			}
 		}
 	}
@@ -58,8 +64,8 @@ func ctrlOpts() func(impl *controller.Impl) controller.Options {
 	}
 }
 
-// NewController creates a Reconciler and returns the result of NewImpl.
-func NewController(
+// NewReconciler creates a Reconciler and returns the result of NewImpl.
+func NewReconciler(
 	ctx context.Context,
 	cmw configmap.Watcher,
 ) *controller.Impl {
@@ -75,4 +81,21 @@ func NewController(
 	}
 
 	return impl
+}
+
+func serializeObjectYaml(p any) {
+	// use gopkgs.yaml to serialize
+	yaml.
+
+}
+
+// ReconcileKind implements Interface.ReconcileKind.
+func (r *Reconciler) ReconcileKind(ctx context.Context, pr *tektonv1.PipelineRun) reconciler.Event {
+	// This logger has all the context necessary to identify which resource is being reconciled.
+	logger := logging.FromContext(ctx)
+	logger.Infof("Reconciling PipelineRun %s", pr.GetName())
+	if pr.Spec.Status == tektonv1.PipelineRunSpecStatusPending {
+		logger.Info("Pending PipelineRun")
+	}
+	return nil
 }
