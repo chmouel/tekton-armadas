@@ -275,11 +275,6 @@ go.uber.org/zap/zapcore
 golang.org/x/exp/constraints
 golang.org/x/exp/maps
 golang.org/x/exp/slices
-# golang.org/x/mod v0.22.0
-## explicit; go 1.22.0
-golang.org/x/mod/internal/lazyregexp
-golang.org/x/mod/module
-golang.org/x/mod/semver
 # golang.org/x/net v0.34.0
 ## explicit; go 1.18
 golang.org/x/net/http/httpguts
@@ -307,12 +302,6 @@ golang.org/x/sys/windows
 golang.org/x/term
 # golang.org/x/text v0.21.0
 ## explicit; go 1.18
-golang.org/x/text/cases
-golang.org/x/text/internal
-golang.org/x/text/internal/language
-golang.org/x/text/internal/language/compact
-golang.org/x/text/internal/tag
-golang.org/x/text/language
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
@@ -321,30 +310,6 @@ golang.org/x/text/width
 # golang.org/x/time v0.6.0
 ## explicit; go 1.18
 golang.org/x/time/rate
-# golang.org/x/tools v0.29.0
-## explicit; go 1.22.0
-golang.org/x/tools/go/ast/astutil
-golang.org/x/tools/go/gcexportdata
-golang.org/x/tools/go/packages
-golang.org/x/tools/go/types/objectpath
-golang.org/x/tools/go/types/typeutil
-golang.org/x/tools/imports
-golang.org/x/tools/internal/aliases
-golang.org/x/tools/internal/event
-golang.org/x/tools/internal/event/core
-golang.org/x/tools/internal/event/keys
-golang.org/x/tools/internal/event/label
-golang.org/x/tools/internal/gcimporter
-golang.org/x/tools/internal/gocommand
-golang.org/x/tools/internal/gopathwalk
-golang.org/x/tools/internal/imports
-golang.org/x/tools/internal/modindex
-golang.org/x/tools/internal/packagesinternal
-golang.org/x/tools/internal/pkgbits
-golang.org/x/tools/internal/stdlib
-golang.org/x/tools/internal/typeparams
-golang.org/x/tools/internal/typesinternal
-golang.org/x/tools/internal/versions
 # gomodules.xyz/jsonpatch/v2 v2.4.0
 ## explicit; go 1.20
 gomodules.xyz/jsonpatch/v2
@@ -851,56 +816,6 @@ k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 k8s.io/client-go/util/watchlist
 k8s.io/client-go/util/workqueue
-# k8s.io/code-generator v0.31.4
-## explicit; go 1.22.0
-k8s.io/code-generator
-k8s.io/code-generator/cmd/applyconfiguration-gen
-k8s.io/code-generator/cmd/applyconfiguration-gen/args
-k8s.io/code-generator/cmd/applyconfiguration-gen/generators
-k8s.io/code-generator/cmd/client-gen
-k8s.io/code-generator/cmd/client-gen/args
-k8s.io/code-generator/cmd/client-gen/generators
-k8s.io/code-generator/cmd/client-gen/generators/fake
-k8s.io/code-generator/cmd/client-gen/generators/scheme
-k8s.io/code-generator/cmd/client-gen/generators/util
-k8s.io/code-generator/cmd/client-gen/types
-k8s.io/code-generator/cmd/conversion-gen
-k8s.io/code-generator/cmd/conversion-gen/args
-k8s.io/code-generator/cmd/conversion-gen/generators
-k8s.io/code-generator/cmd/deepcopy-gen
-k8s.io/code-generator/cmd/deepcopy-gen/args
-k8s.io/code-generator/cmd/deepcopy-gen/generators
-k8s.io/code-generator/cmd/defaulter-gen
-k8s.io/code-generator/cmd/defaulter-gen/args
-k8s.io/code-generator/cmd/defaulter-gen/generators
-k8s.io/code-generator/cmd/go-to-protobuf
-k8s.io/code-generator/cmd/go-to-protobuf/protobuf
-k8s.io/code-generator/cmd/informer-gen
-k8s.io/code-generator/cmd/informer-gen/args
-k8s.io/code-generator/cmd/informer-gen/generators
-k8s.io/code-generator/cmd/lister-gen
-k8s.io/code-generator/cmd/lister-gen/args
-k8s.io/code-generator/cmd/lister-gen/generators
-k8s.io/code-generator/cmd/register-gen
-k8s.io/code-generator/cmd/register-gen/args
-k8s.io/code-generator/cmd/register-gen/generators
-k8s.io/code-generator/pkg/namer
-k8s.io/code-generator/pkg/util
-k8s.io/code-generator/third_party/forked/golang/reflect
-# k8s.io/gengo v0.0.0-20240404160639-a0386bf69313
-## explicit; go 1.13
-k8s.io/gengo/args
-k8s.io/gengo/generator
-k8s.io/gengo/namer
-k8s.io/gengo/parser
-k8s.io/gengo/types
-# k8s.io/gengo/v2 v2.0.0-20240228010128-51d4e06bde70
-## explicit; go 1.20
-k8s.io/gengo/v2
-k8s.io/gengo/v2/generator
-k8s.io/gengo/v2/namer
-k8s.io/gengo/v2/parser
-k8s.io/gengo/v2/types
 # k8s.io/klog/v2 v2.130.1
 ## explicit; go 1.18
 k8s.io/klog/v2
@@ -912,19 +827,14 @@ k8s.io/klog/v2/internal/severity
 k8s.io/klog/v2/internal/sloghandler
 # k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8
 ## explicit; go 1.20
-k8s.io/kube-openapi/cmd/openapi-gen
-k8s.io/kube-openapi/cmd/openapi-gen/args
 k8s.io/kube-openapi/pkg/cached
 k8s.io/kube-openapi/pkg/common
-k8s.io/kube-openapi/pkg/generators
-k8s.io/kube-openapi/pkg/generators/rules
 k8s.io/kube-openapi/pkg/handler3
 k8s.io/kube-openapi/pkg/internal
 k8s.io/kube-openapi/pkg/internal/third_party/go-json-experiment/json
 k8s.io/kube-openapi/pkg/schemaconv
 k8s.io/kube-openapi/pkg/spec3
 k8s.io/kube-openapi/pkg/util/proto
-k8s.io/kube-openapi/pkg/util/sets
 k8s.io/kube-openapi/pkg/validation/spec
 # k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
 ## explicit; go 1.18
@@ -937,9 +847,6 @@ k8s.io/utils/pointer
 k8s.io/utils/ptr
 k8s.io/utils/strings/slices
 k8s.io/utils/trace
-# knative.dev/hack v0.0.0-20250116150306-c142b4835bc5
-## explicit; go 1.21
-knative.dev/hack
 # knative.dev/pkg v0.0.0-20250117084104-c43477f0052b
 ## explicit; go 1.22.7
 knative.dev/pkg/apis
@@ -948,14 +855,10 @@ knative.dev/pkg/apis/duck/ducktypes
 knative.dev/pkg/apis/duck/v1
 knative.dev/pkg/changeset
 knative.dev/pkg/client/injection/kube/client
-knative.dev/pkg/codegen/cmd/injection-gen
-knative.dev/pkg/codegen/cmd/injection-gen/args
-knative.dev/pkg/codegen/cmd/injection-gen/generators
 knative.dev/pkg/configmap
 knative.dev/pkg/configmap/informer
 knative.dev/pkg/controller
 knative.dev/pkg/environment
-knative.dev/pkg/hack
 knative.dev/pkg/hash
 knative.dev/pkg/injection
 knative.dev/pkg/injection/clients/namespacedkube/informers/factory
