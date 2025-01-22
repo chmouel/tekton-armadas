@@ -103,7 +103,7 @@ func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.
 	if err != nil {
 		return err
 	}
-	logger.Infof("Sending PipelineRun %s to minion", pr.GetName(), data)
+	logger.Infof("Sending PipelineRun %s to minion: %s", pr.GetName(), data)
 	return nil
 }
 
