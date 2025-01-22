@@ -15,10 +15,10 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: aramda-controller-admin
+  name: armada-orchestrator-reconciler-admin
 subjects:
   - kind: ServiceAccount
-    name: controller
+    name: orchestrator-reconciler
     namespace: armadas
 roleRef:
   kind: ClusterRole

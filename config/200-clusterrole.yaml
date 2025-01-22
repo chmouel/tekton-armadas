@@ -19,8 +19,8 @@ metadata:
 aggregationRule:
   clusterRoleSelectors:
     - matchLabels:
-        armada.tekton.dev/controller: "true"
-rules: [] # Rules are automatically filled in by the controller manager.
+        armada.tekton.dev/orchestrator-reconciler: "true"
+rules: [] # Rules are automatically filled in by the orchestrator-reconciler manager.
 
 ---
 kind: ClusterRole

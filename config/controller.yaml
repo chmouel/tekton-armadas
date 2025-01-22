@@ -15,7 +15,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller
+  name: orchestrator-reconciler
   namespace: armadas
   labels:
     samples.knative.dev/release: devel
@@ -23,11 +23,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: controller
+      app: orchestrator-reconciler
   template:
     metadata:
       labels:
-        app: controller
+        app: orchestrator-reconciler
     spec:
       # To avoid node becoming SPOF, spread our replicas to different nodes.
       affinity:
@@ -36,16 +36,16 @@ spec:
             - podAffinityTerm:
                 labelSelector:
                   matchLabels:
-                    app: controller
+                    app: orchestrator-reconciler
                 topologyKey: kubernetes.io/hostname
               weight: 100
 
-      serviceAccountName: controller
+      serviceAccountName: orchestrator-reconciler
       containers:
-        - name: controller
+        - name: orchestrator-reconciler
           # This is the Go import path for the binary that is containerized
           # and substituted here.
-          image: ko://github.com/openshift-pipelines/tekton-armadas/cmd/controller
+          image: ko://github.com/openshift-pipelines/tekton-armadas/cmd/orchestrator-reconciler
           resources:
             requests:
               cpu: 100m

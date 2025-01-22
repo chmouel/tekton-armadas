@@ -59,5 +59,4 @@ data:
 
     # Log level overrides
     # Changes are be picked up immediately.
-    loglevel.controller: "info"
-    loglevel.webhook: "info"
+    loglevel.orchestrator-reconciler: "info"

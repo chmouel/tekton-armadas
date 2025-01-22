@@ -18,6 +18,7 @@ package main
 
 import (
 	// The set of controllers this controller process runs.
+
 	"github.com/openshift-pipelines/tekton-armadas/pkg/reconciler/orchestrator"
 
 	// This defines the shared main for injected controllers.
@@ -25,5 +26,5 @@ import (
 )
 
 func main() {
-	sharedmain.Main("controller", orchestrator.NewReconciler)
+	sharedmain.Main("orchestrator-reconciler", orchestrator.NewReconciler)
 }

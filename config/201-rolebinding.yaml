@@ -19,7 +19,7 @@ metadata:
   namespace: armadas
 subjects:
   - kind: ServiceAccount
-    name: controller
+    name: orchestrator-reconciler
     namespace: armadas
 roleRef:
   kind: Role

@@ -22,14 +22,14 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift-pipelines/tekton-armadas/pkg/apis/armada"
+	"github.com/openshift-pipelines/tekton-armadas/pkg/clients"
+	pipelineapi "github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	tektonPipelineRunInformerv1 "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipelinerun"
 	tektonPipelineRunReconcilerv1 "github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1/pipelinerun"
-	kubeclient "knative.dev/pkg/client/injection/kube/client"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
 	"knative.dev/pkg/kmeta"
@@ -38,7 +38,7 @@ import (
 )
 
 type Reconciler struct {
-	kubeclient kubernetes.Interface
+	clients *clients.Clients
 }
 
 // enqueue only the pipelineruns which are in `started` state
@@ -71,8 +71,13 @@ func ctrlOpts() func(impl *controller.Impl) controller.Options {
 func NewReconciler(ctx context.Context, _ configmap.Watcher) *controller.Impl {
 	pipelineRunInformer := tektonPipelineRunInformerv1.Get(ctx)
 
+	clients, err := clients.NewClients()
+	if err != nil {
+		logging.FromContext(ctx).Panicf("Couldn't register clients: %w", err)
+	}
+
 	r := &Reconciler{
-		kubeclient: kubeclient.Get(ctx),
+		clients: clients,
 	}
 	impl := tektonPipelineRunReconcilerv1.NewImpl(ctx, r, ctrlOpts())
 
@@ -98,7 +103,7 @@ func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.
 	if err != nil {
 		return err
 	}
-	logger.Infof("Sending PipelineRun %s to minion: %s", pr.GetName(), data)
+	logger.Infof("Sending PipelineRun %s to minion", pr.GetName(), data)
 	return nil
 }
 
@@ -106,8 +111,12 @@ func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.
 func (r *Reconciler) ReconcileKind(ctx context.Context, pr *tektonv1.PipelineRun) reconciler.Event {
 	// This logger has all the context necessary to identify which resource is being reconciled.
 	logger := logging.FromContext(ctx)
-	logger.Infof("Reconciling PipelineRun %s, status: %s", pr.GetName(), pr.Spec.Status)
-	if pr.Spec.Status == tektonv1.PipelineRunSpecStatusPending {
+	if pr.Spec.Status == tektonv1.PipelineRunSpecStatusPending && pr.Status.GetConditions() == nil {
+		label, labelExist := pr.GetLabels()[pipelineapi.PipelineLabelKey]
+		if !labelExist || label == "" {
+			return nil
+		}
+		logger.Infof("Reconciling PipelineRun %s, status: %s", pr.GetName(), pr.Spec.Status)
 		return r.HandlePendingPipelineRun(ctx, pr)
 	}
 	return nil

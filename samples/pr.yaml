@@ -6,8 +6,8 @@ metadata:
   annotations:
     armada.tekton.dev/orchestration: "true"
 spec:
+  status: "PipelineRunPending"
   pipelineSpec:
-    status: "PipelineRunPending"
     tasks:
       - name: noop-task
         taskSpec:
