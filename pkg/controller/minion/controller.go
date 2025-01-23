@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"time"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/openshift-pipelines/tekton-armadas/pkg/clients"
+	"github.com/openshift-pipelines/tekton-armadas/pkg/templates"
 	"go.uber.org/zap"
 	"knative.dev/eventing/pkg/adapter/v2"
 	"knative.dev/pkg/logging"
@@ -65,15 +65,18 @@ func (c *controller) handleEvent(_ context.Context) http.HandlerFunc {
 			return
 		}
 
-		payload, err := io.ReadAll(request.Body)
+		event, err := cloudevents.NewEventFromHTTPRequest(request)
 		if err != nil {
-			c.logger.Errorf("failed to read body : %v", err)
+			c.logger.Errorf("failed to create event from request: %v", err)
 			response.WriteHeader(http.StatusInternalServerError)
-			return
+		}
+		c.logger.Debugf("Received event: %s", event.String())
+
+		aEvent := templates.ArmadaEvent{}
+		if err := event.DataAs(&aEvent); err != nil {
+			c.logger.Errorf("failed to convert event data: %v", err)
 		}
 
-		payloadStr := string(payload)
-		c.logger.Infof("Received event: %s", payloadStr)
 		c.writeResponse(response, http.StatusOK, "skipped event")
 	}
 }
