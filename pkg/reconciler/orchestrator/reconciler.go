@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/yaml"
 
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/openshift-pipelines/tekton-armadas/pkg/apis/armada"
 	"github.com/openshift-pipelines/tekton-armadas/pkg/clients"
 	pipelineapi "github.com/tektoncd/pipeline/pkg/apis/pipeline"
@@ -97,6 +98,10 @@ func serializeObjectYaml(p any) (string, error) {
 	return base64.StdEncoding.EncodeToString(marshalled), nil
 }
 
+type ArmadaEvent struct {
+	PipelineRun string `json:"pipelineRun"`
+}
+
 func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.PipelineRun) reconciler.Event {
 	logger := logging.FromContext(ctx)
 	data, err := serializeObjectYaml(pr)
@@ -104,6 +109,30 @@ func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.
 		return err
 	}
 	logger.Infof("Sending PipelineRun %s to minion: %s", pr.GetName(), data)
+
+	aevent := ArmadaEvent{
+		PipelineRun: data,
+	}
+
+	event := cloudevents.NewEvent()
+	// TODO: Is setsource and settype set the right way. (and make the values as const)
+	event.SetSource("https://github.com/openshift-pipelines/tekton-armadas")
+	event.SetType("armada.tekton.dev/v1")
+	if err := event.SetData(cloudevents.ApplicationJSON, aevent); err != nil {
+		return fmt.Errorf("failed to set data: %w", err)
+	}
+
+	// TODO: location
+	ctx = cloudevents.ContextWithTarget(ctx, "http://localhost:8083")
+	ce, err := cloudevents.NewClientHTTP()
+	if err != nil {
+		return fmt.Errorf("failed to create cloudevents client: %w", err)
+	}
+
+	if result := ce.Send(ctx, event); !cloudevents.IsACK(result) {
+		return fmt.Errorf("failed to send cloudevent: %w", result)
+	}
+
 	return nil
 }
 
