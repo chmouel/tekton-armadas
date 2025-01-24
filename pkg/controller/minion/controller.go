@@ -10,8 +10,9 @@ import (
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/openshift-pipelines/tekton-armadas/pkg/clients"
-	"github.com/openshift-pipelines/tekton-armadas/pkg/templates"
+	"github.com/openshift-pipelines/tekton-armadas/pkg/types"
 	"go.uber.org/zap"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/eventing/pkg/adapter/v2"
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/system"
@@ -58,7 +59,31 @@ func (c *controller) writeResponse(response http.ResponseWriter, statusCode int,
 	}
 }
 
-func (c *controller) handleEvent(_ context.Context) http.HandlerFunc {
+func (c *controller) doTypes(ctx context.Context, aEvent types.ArmadaEvent) error {
+	tt, err := types.ReadTektonTypes(ctx, []string{aEvent.PipelineRun})
+	if err != nil {
+		return fmt.Errorf("failed to read tekton types: %w", err)
+	}
+
+	for _, pr := range tt.Tekton.PipelineRuns {
+		if _, err := c.clients.Tekton.TektonV1().PipelineRuns(pr.GetNamespace()).Get(ctx, pr.GetName(), metav1.GetOptions{}); err == nil {
+			if err := c.clients.Tekton.TektonV1().PipelineRuns(pr.GetNamespace()).Delete(ctx, pr.GetName(), metav1.DeleteOptions{}); err != nil {
+				return fmt.Errorf("error deleting pipelinerun %s: %w", pr.GetName(), err)
+			} else {
+				c.logger.Info(fmt.Sprintf("pipelinerun %s has been delete", pr.GetName()))
+			}
+		}
+
+		if cp, err := c.clients.Tekton.TektonV1().PipelineRuns(pr.GetNamespace()).Create(ctx, pr, metav1.CreateOptions{}); err != nil {
+			return fmt.Errorf("error creating pipelinerun: %w", err)
+		} else {
+			c.logger.Info(fmt.Sprintf("pipelinerun %s has been created", cp.GetName()))
+		}
+	}
+	return err
+}
+
+func (c *controller) handleEvent(ctx context.Context) http.HandlerFunc {
 	return func(response http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodPost {
 			c.writeResponse(response, http.StatusOK, "ok")
@@ -72,12 +97,19 @@ func (c *controller) handleEvent(_ context.Context) http.HandlerFunc {
 		}
 		c.logger.Debugf("Received event: %s", event.String())
 
-		aEvent := templates.ArmadaEvent{}
+		aEvent := types.ArmadaEvent{}
 		if err := event.DataAs(&aEvent); err != nil {
 			c.logger.Errorf("failed to convert event data: %v", err)
 		}
 
-		c.writeResponse(response, http.StatusOK, "skipped event")
+		if err := c.doTypes(ctx, aEvent); err != nil {
+			c.logger.Errorf("failed to do types: %+v", err)
+			c.writeResponse(response, http.StatusInternalServerError, "failed to read tekton types")
+			return
+		}
+
+		// output a json message with details
+		c.writeResponse(response, http.StatusAccepted, fmt.Sprintf(`{"message": "created", "event": %s}`, event.Context.GetID()))
 	}
 }
 

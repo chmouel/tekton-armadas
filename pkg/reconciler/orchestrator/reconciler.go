@@ -21,13 +21,13 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	types2 "github.com/openshift-pipelines/tekton-armadas/pkg/types"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/yaml"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/openshift-pipelines/tekton-armadas/pkg/apis/armada"
 	"github.com/openshift-pipelines/tekton-armadas/pkg/clients"
-	"github.com/openshift-pipelines/tekton-armadas/pkg/templates"
 	pipelineapi "github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	tektonPipelineRunInformerv1 "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/pipelinerun"
@@ -73,18 +73,18 @@ func ctrlOpts() func(impl *controller.Impl) controller.Options {
 func NewReconciler(ctx context.Context, _ configmap.Watcher) *controller.Impl {
 	pipelineRunInformer := tektonPipelineRunInformerv1.Get(ctx)
 
-	clients, err := clients.NewClients()
+	newClients, err := clients.NewClients()
 	if err != nil {
-		logging.FromContext(ctx).Panicf("Couldn't register clients: %w", err)
+		logging.FromContext(ctx).Panicf("Couldn't register clients: %+v", err)
 	}
 
 	r := &Reconciler{
-		clients: clients,
+		clients: newClients,
 	}
 	impl := tektonPipelineRunReconcilerv1.NewImpl(ctx, r, ctrlOpts())
 
 	if _, err := pipelineRunInformer.Informer().AddEventHandler(controller.HandleAll(checkStateAndEnqueue(impl))); err != nil {
-		logging.FromContext(ctx).Panicf("Couldn't register PipelineRun informer event handler: %w", err)
+		logging.FromContext(ctx).Panicf("Couldn't register PipelineRun informer event handler: %+v", err)
 	}
 
 	return impl
@@ -107,7 +107,7 @@ func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.
 	}
 	logger.Infof("Sending PipelineRun %s to minion: %s", pr.GetName(), data)
 
-	aevent := templates.ArmadaEvent{
+	aevent := types2.ArmadaEvent{
 		PipelineRun: data,
 		Namespace:   pr.GetNamespace(),
 	}
@@ -117,7 +117,7 @@ func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.
 	// TODO: we need to do this right
 	event.SetSource("https://github.com/openshift-pipelines/tekton-armadas")
 	event.SetType("armada.tekton.dev/v1")
-	event.SetID(templates.UUID())
+	event.SetID(types2.UUID())
 
 	if err := event.SetData(cloudevents.ApplicationJSON, aevent); err != nil {
 		return fmt.Errorf("failed to set data: %w", err)

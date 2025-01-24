@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	// most programming languages  do not have a timeout, but c# does a default
+	// ConnectMaxWaitTime most programming languages  do not have a timeout, but c# does a default
 	// of 100 seconds so using that value.
 	ConnectMaxWaitTime = 100 * time.Second
 	RequestMaxWaitTime = 100 * time.Second

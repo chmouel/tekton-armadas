@@ -14,14 +14,14 @@ import (
 func main() {
 	ctx := signals.NewContext()
 	ctx = adapter.WithInjectorEnabled(ctx)
-	clients, err := clients.NewClients()
+	newClients, err := clients.NewClients()
 	if err != nil {
 		// TODO: handle error
 		panic(err)
 	}
 
-	ctx = context.WithValue(ctx, client.Key{}, clients.Kube)
+	ctx = context.WithValue(ctx, client.Key{}, newClients.Kube)
 	ctx = adapter.WithNamespace(ctx, system.Namespace())
 	ctx = adapter.WithConfigWatcherEnabled(ctx)
-	adapter.MainWithContext(ctx, "minion-controller", minionController.NewEnvConfig, minionController.NewController(clients))
+	adapter.MainWithContext(ctx, "minion-controller", minionController.NewEnvConfig, minionController.NewController(newClients))
 }
