@@ -4,7 +4,9 @@ set -eufo pipefail
 
 FULLPATHSCRIPT=$(readlink -f $0)
 cd $(dirname ${FULLPATHSCRIPT}) || exit 1
-cd $(git rev-parse --show-toplevel) || exit 1
+TOPDIR=$(git rev-parse --show-toplevel)
+cd "${TOPDIR}" || exit 1
+eval "$(direnv export bash)"
 maxMinon=1
 
 [[ -z ${KUBECONFIG} ]] && {
@@ -68,19 +70,20 @@ done
 shift $((OPTIND - 1))
 
 if [[ -n ${KITTY_LISTEN_ON} ]]; then
-  if [[ ${maxMinon} -gt 1 ]]; then
-    kitten @ goto-layout tall
-  else
-    kitten @ goto-layout vertical
-  fi
+  kitten @ goto-layout tall
   for ((i = 1; i < maxMinon + 1; ++i)); do
-    kitten @ launch --no-response --title "Minion: $i" --keep-focus -- bash -ic "export KUBECONFIG=$KUBECONFIG; ${FULLPATHSCRIPT} -l minion-controller;read"
+    kitten @ launch --cwd ${TOPDIR} --no-response --title "Minion: $i" --keep-focus -- bash -ic "export KUBECONFIG=$KUBECONFIG; ${FULLPATHSCRIPT} -l minion-controller;read"
     # kitty @ resize-window --match state:focused --axis vertical --increment 2
     kitty @ set-window-logo --position top-right -m "title:^Minion: " ./hack/png/panda.png
   done
 else
   echo "Need to have kitty running for other windowns switching"
 fi
+
+kitten @ launch --no-response --title "Commands" --keep-focus --cwd ${TOPDIR}
+kitty @ set-window-logo --position top-right -m "title:^Commands" ./hack/png/command.png
+type -a krec >/dev/null 2>/dev/null &&
+  kitten @ send-key -m 'title:^Commands' d o l o o p SPC k r e c SPC . / s a m p l e s / p r . y a m l RET
 
 kitten @ set-window-title "Orchestrator"
 kitty @ set-window-logo --match "title:^Orchestrator" --position top-right ./hack/png/maestro.png
