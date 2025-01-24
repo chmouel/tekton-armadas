@@ -18,12 +18,10 @@ package orchestrator
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 
-	types2 "github.com/openshift-pipelines/tekton-armadas/pkg/types"
+	atypes "github.com/openshift-pipelines/tekton-armadas/pkg/types"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/yaml"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/openshift-pipelines/tekton-armadas/pkg/apis/armada"
@@ -90,24 +88,17 @@ func NewReconciler(ctx context.Context, _ configmap.Watcher) *controller.Impl {
 	return impl
 }
 
-func serializeObjectYaml(p any) (string, error) {
-	// use gopkgs.yaml to serialize
-	marshalled, err := yaml.Marshal(p)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal object: %w", err)
-	}
-	return base64.StdEncoding.EncodeToString(marshalled), nil
-}
-
 func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.PipelineRun) reconciler.Event {
 	logger := logging.FromContext(ctx)
-	data, err := serializeObjectYaml(pr)
+	pr.Kind = pipelineapi.PipelineRunControllerName
+	pr.APIVersion = tektonv1.SchemeGroupVersion.String()
+	data, err := atypes.SerializeObjectYaml(pr)
 	if err != nil {
 		return err
 	}
 	logger.Infof("Sending PipelineRun %s to minion: %s", pr.GetName(), data)
 
-	aevent := types2.ArmadaEvent{
+	aevent := atypes.ArmadaEvent{
 		PipelineRun: data,
 		Namespace:   pr.GetNamespace(),
 	}
@@ -117,7 +108,7 @@ func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.
 	// TODO: we need to do this right
 	event.SetSource("https://github.com/openshift-pipelines/tekton-armadas")
 	event.SetType("armada.tekton.dev/v1")
-	event.SetID(types2.UUID())
+	event.SetID(atypes.UUID())
 
 	if err := event.SetData(cloudevents.ApplicationJSON, aevent); err != nil {
 		return fmt.Errorf("failed to set data: %w", err)
@@ -141,6 +132,7 @@ func (r *Reconciler) HandlePendingPipelineRun(ctx context.Context, pr *tektonv1.
 func (r *Reconciler) ReconcileKind(ctx context.Context, pr *tektonv1.PipelineRun) reconciler.Event {
 	// This logger has all the context necessary to identify which resource is being reconciled.
 	logger := logging.FromContext(ctx)
+
 	if pr.Spec.Status == tektonv1.PipelineRunSpecStatusPending && pr.Status.GetConditions() == nil {
 		label, labelExist := pr.GetLabels()[pipelineapi.PipelineLabelKey]
 		if !labelExist || label == "" {
