@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# Copyright 2024 Chmouel Boudjnah <chmouel@chmouel.com>
+set -eufo pipefail
+
+FULLPATHSCRIPT=$(readlink -f $0)
+cd $(dirname ${FULLPATHSCRIPT}) || exit 1
+cd $(git rev-parse --show-toplevel) || exit 1
+maxMinon=1
+
+[[ -z ${KUBECONFIG} ]] && {
+  echo "No KUBECONFIG set"
+  exit 1
+}
+
+loopIt() {
+  target=$1
+  while true; do
+    clear
+    bash -ic "echo '================================='; go run cmd/${target}/main.go --disable-ha 2>&1 | snazy" || true
+    echo "Press any key to continue"
+    read -n1 -s
+  done
+}
+
+show_help() {
+  cat <<EOF
+$(basename $(readlink -f $0)) - tail armada binaries
+ 
+EOF
+  grep -E "[ ]*[a-zA-Z0-9-]\) ##" $0 |
+    sed -e 's/^[ ]*/-/' \
+      -e 's/-\([0-9A-Za-z]*\)[  ]*|[  ]*\([0-9A-Za-z]*\)/-\1, -\2/' \
+      -e 's/##//' -e 's/)[ ]*/ - /' |
+    awk -F" - " '{printf "%-10s %s\n", $1, $2}'
+
+  cat <<EOF
+
+Author: Chmouel Boudjnah <chmouel@chmouel.com> - @chmouel
+EOF
+}
+while getopts "n:hl:" opt; do
+  case $opt in
+  n)
+    maxMinon=${OPTARG}
+    ;;
+  l)
+    controller=${OPTARG}
+    [[ -e ./cmd/${controller}/main.go ]] || {
+      echo "No such controller: ${controller}" >&2
+      exit 1
+    }
+    export SNAZY_LEVEL_SYMBOLS=true SYSTEM_NAMESPACE=armadas
+    loopIt ${controller}
+    ;;
+
+  h)
+    echo "usage: $(basename $(readlink -f $0))"
+    show_help
+    exit 0
+    ;;
+  *)
+    echo "unknown option: -${OPTARG}" >&2
+    show_help
+    exit 1
+    ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+if [[ -n ${KITTY_LISTEN_ON} ]]; then
+  if [[ ${maxMinon} -gt 1 ]]; then
+    kitten @ goto-layout tall
+  else
+    kitten @ goto-layout vertical
+  fi
+  for ((i = 1; i < maxMinon + 1; ++i)); do
+    kitten @ launch --no-response --title "Minion: $i" --keep-focus -- bash -ic "export KUBECONFIG=$KUBECONFIG; ${FULLPATHSCRIPT} -l minion-controller;read"
+    # kitty @ resize-window --match state:focused --axis vertical --increment 2
+    kitty @ set-window-logo --position top-right -m "title:^Minion: " ./hack/png/panda.png
+  done
+else
+  echo "Need to have kitty running for other windowns switching"
+fi
+
+kitten @ set-window-title "Orchestrator"
+kitty @ set-window-logo --match "title:^Orchestrator" --position top-right ./hack/png/maestro.png
+exec ${FULLPATHSCRIPT} -l orchestrator-reconciler
