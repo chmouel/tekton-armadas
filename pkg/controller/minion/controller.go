@@ -69,16 +69,15 @@ func (c *controller) doTypes(ctx context.Context, aEvent types.ArmadaEvent) erro
 		if _, err := c.clients.Tekton.TektonV1().PipelineRuns(aEvent.Namespace).Get(ctx, pr.GetName(), metav1.GetOptions{}); err == nil {
 			if err := c.clients.Tekton.TektonV1().PipelineRuns(aEvent.Namespace).Delete(ctx, pr.GetName(), metav1.DeleteOptions{}); err != nil {
 				return fmt.Errorf("error deleting pipelinerun %s: %w", pr.GetName(), err)
-			} else {
-				c.logger.Info(fmt.Sprintf("pipelinerun %s has been delete", pr.GetName()))
 			}
+			c.logger.Info(fmt.Sprintf("pipelinerun %s has been deleted", pr.GetName()))
 		}
 
-		if cp, err := c.clients.Tekton.TektonV1().PipelineRuns(aEvent.Namespace).Create(ctx, pr, metav1.CreateOptions{}); err != nil {
+		cp, err := c.clients.Tekton.TektonV1().PipelineRuns(aEvent.Namespace).Create(ctx, pr, metav1.CreateOptions{})
+		if err != nil {
 			return fmt.Errorf("error creating pipelinerun: %w", err)
-		} else {
-			c.logger.Info(fmt.Sprintf("pipelinerun %s has been created", cp.GetName()))
 		}
+		c.logger.Info(fmt.Sprintf("pipelinerun %s has been created", cp.GetName()))
 	}
 	return err
 }

@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// objToMap converts an object to a map representation
+// objToMap converts an object to a map representation.
 func objToMap(obj interface{}) map[string]interface{} {
 	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	unstructuredMap["Kind"] = unstructuredMap["kind"]
@@ -22,7 +22,7 @@ func objToMap(obj interface{}) map[string]interface{} {
 	return unstructuredMap
 }
 
-// toUnstructured converts a structured object to an unstructured object
+// toUnstructured converts a structured object to an unstructured object.
 func toUnstructured(obj interface{}) (*unstructured.Unstructured, error) {
 	u := &unstructured.Unstructured{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(objToMap(obj), u)
@@ -32,7 +32,7 @@ func toUnstructured(obj interface{}) (*unstructured.Unstructured, error) {
 	return u, nil
 }
 
-// removeFieldForExport remove fields that should not be applied
+// removeFieldForExport remove fields that should not be applied.
 func removeFieldForExport(obj *unstructured.Unstructured) error {
 	content := obj.UnstructuredContent()
 
@@ -71,7 +71,7 @@ func removeFieldForExport(obj *unstructured.Unstructured) error {
 	return nil
 }
 
-// SerializeObjectYaml serializes an object to a base64 encoded yaml string
+// SerializeObjectYaml serializes an object to a base64 encoded yaml string.
 func SerializeObjectYaml(p any) (string, error) {
 	// use gopkgs.yaml to serialize
 	uns, err := toUnstructured(p)
